@@ -135,7 +135,7 @@ def all_tasks(message):
     user_tasks = data_task.get(id)
     if user_tasks is None:
         bot.send_message(
-            text='Пока у вас нет ни одной задачи, давайте же создадим их',
+            text='Пока у вас нет ни одной задачи, давайте же создадим их /new_task',
             chat_id=id
         )
         return
