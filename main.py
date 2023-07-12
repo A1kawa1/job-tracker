@@ -37,6 +37,7 @@ class Task:
     date_start: datetime.datetime = None
     date_end: datetime.datetime = None
     works: List[Work] = None
+    spent_seconds: int = 0
 
 
 def create_task(message):
@@ -93,18 +94,8 @@ def stop_task(message, index):
         text=f'Конец: {task.date_end}',
         callback_data='gtrrtggtr'
     ))
-    works = task.works
-    time_spent = 'неопределенно'
-    if not works is None:
-        time_spent = 0
-        for el in works:
-            if not el.time_end is None:
-                delta = el.time_end - el.time_start
-                delta = delta.total_seconds()
-                time_spent += delta/60
-        time_spent = f'{int(time_spent//60)}ч {int(time_spent%60)}мин'
     markup.add(telebot.types.InlineKeyboardButton(
-        text=f'Потраченное время: {time_spent}',
+        text=f'Потраченное время: {int(task.spent_seconds//60//60)}ч {int(task.spent_seconds//60%60)}мин',
         callback_data='gtrrtggtr'
     ))
     markup.add(telebot.types.InlineKeyboardButton(
@@ -249,18 +240,8 @@ def query_handler(call):
             text=f'Конец: {task.date_end}',
             callback_data='gtrrtggtr'
         ))
-        works = task.works
-        time_spent = 'неопределенно'
-        if not works is None:
-            time_spent = 0
-            for el in works:
-                if not el.time_end is None:
-                    delta = el.time_end - el.time_start
-                    delta = delta.total_seconds()
-                    time_spent += delta/60
-            time_spent = f'{int(time_spent//60)}ч {int(time_spent%60)}мин'
         markup.add(telebot.types.InlineKeyboardButton(
-            text=f'Потраченное время: {time_spent}',
+            text=f'Потраченное время: {int(task.spent_seconds//60//60)}ч {int(task.spent_seconds//60%60)}мин',
             callback_data='gtrrtggtr'
         ))
         markup.add(telebot.types.InlineKeyboardButton(
@@ -309,7 +290,7 @@ def query_handler(call):
             callback_data='close'
         ))
         bot.send_message(
-            text=f'Задача - {task.name}',
+            text=f'Задача - {task.name}, {int(task.spent_seconds//60//60)}ч {int(task.spent_seconds//60%60)}мин',
             chat_id=id,
             reply_markup=markup
         )
@@ -320,7 +301,7 @@ def query_handler(call):
         )
         index = int(call.data.replace('start_work_', ''))
         task = data_task.get(id)[index]
-        time_start = datetime.datetime.fromtimestamp(call.message.date)
+        time_start = datetime.datetime.now()
         if task.works is None:
             task.works = [Work(time_start=time_start)]
             bot.send_message(
@@ -362,7 +343,7 @@ def query_handler(call):
             callback_data='close'
         ))
         bot.send_message(
-            text=f'Задача - {task.name}',
+            text=f'Задача - {task.name}, {int(task.spent_seconds//60//60)}ч {int(task.spent_seconds//60%60)}мин',
             chat_id=id,
             reply_markup=markup
         )
@@ -372,7 +353,7 @@ def query_handler(call):
             message_id=call.message.message_id
         )
         index = int(call.data.replace('end_work_', ''))
-        time_end = datetime.datetime.fromtimestamp(call.message.date)
+        time_end = datetime.datetime.now()
         task = data_task.get(id)[index]
         if task.works is None:
             bot.send_message(
@@ -392,6 +373,11 @@ def query_handler(call):
                     text=MessageText.end_work_message.value,
                     chat_id=id
                 )
+                print(task.works[-1].time_end, task.works[-1].time_start)
+                delta = task.works[-1].time_end - task.works[-1].time_start
+                delta = int(delta.total_seconds())
+                task.spent_seconds += delta
+                print(delta, task.spent_seconds)
         markup = telebot.types.InlineKeyboardMarkup()
         markup.add(telebot.types.InlineKeyboardButton(
             text=f'Начать работу',
@@ -414,7 +400,7 @@ def query_handler(call):
             callback_data='close'
         ))
         bot.send_message(
-            text=f'Задача - {task.name}',
+            text=f'Задача - {task.name}, {int(task.spent_seconds//60//60)}ч {int(task.spent_seconds//60%60)}мин',
             chat_id=id,
             reply_markup=markup
         )
